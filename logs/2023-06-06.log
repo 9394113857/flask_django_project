@@ -1,0 +1,8 @@
+2023-06-06 14:45:42,945 INFO [app:34] Home page accessed
+2023-06-06 14:45:45,832 INFO [app:34] Home page accessed
+2023-06-06 14:45:52,286 INFO [app:44] Calculate route accessed with operation: addition, num1: 1, num2: 1
+2023-06-06 14:45:53,332 INFO [app:50] Result: 2
+2023-06-06 14:47:33,142 INFO [app:34] Home page accessed
+2023-06-06 14:47:45,853 INFO [app:44] Calculate route accessed with operation: division, num1: 30, num2: 3
+2023-06-06 14:47:46,882 INFO [app:50] Result: 10.0
+2023-06-06 14:48:09,241 INFO [app:34] Home page accessed

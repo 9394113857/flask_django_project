@@ -1,11 +1,61 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import requests
+
+import logging
+import os
+from datetime import date
+from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 
+# Set up logger configuration
+logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(logs_dir, exist_ok=True)
+
+log_file = os.path.join(logs_dir, f'{date.today()}.log')
+
+log_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024, backupCount=5)
+log_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s [%(module)s:%(lineno)d] %(message)s'))
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(log_handler)
+
+# Delete older log files
+for filename in os.listdir(logs_dir):
+    if filename.endswith('.log'):
+        filepath = os.path.join(logs_dir, filename)
+        if filepath != log_file:
+            os.remove(filepath)
+
+
 @app.route('/')
 def home():
-    return render_template('home.html')
+    logger.info('Home page accessed')
+    return render_template('index.html')
+
+
+@app.route('/calculate')
+def calculate():
+    num1 = request.args.get('num1')
+    num2 = request.args.get('num2')
+    operation = request.args.get('operation')
+
+    logger.info(f'Calculate route accessed with operation: {operation}, num1: {num1}, num2: {num2}')
+
+    url = f'http://localhost:8000/app3/{operation}/{num1}/{num2}/'
+    response = requests.get(url)
+    result = response.json()['result']
+
+    logger.info(f'Result: {result}')
+
+    return render_template('result.html', result=result)
+
+#####################################
+
+# @app.route('/')
+# def home():
+#     return render_template('home.html')
 
 @app.route('/app1/')
 def app1_view():
@@ -28,4 +78,4 @@ def app2_second_view():
     return response.content
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
