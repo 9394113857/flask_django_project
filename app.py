@@ -1,6 +1,7 @@
 import logging
 import os
 import sqlite3
+import sys
 from datetime import date
 from logging.handlers import RotatingFileHandler
 
@@ -34,17 +35,9 @@ def create_connection():
     conn = None
     try:
         conn = sqlite3.connect('calculator.db')
-        return conn
-    except sqlite3.Error as e:
-        print(e)
 
-    return conn
-
-
-def create_table(conn):
-    try:
-        cursor = conn.cursor()
-        cursor.execute('''
+        # Define the table creation query
+        create_table_query = '''
             CREATE TABLE IF NOT EXISTS calculator_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 operation TEXT,
@@ -53,10 +46,18 @@ def create_table(conn):
                 result REAL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+        '''
+
+        # Create the table
+        cursor = conn.cursor()
+        cursor.execute(create_table_query)
         conn.commit()
+
+        return conn
     except sqlite3.Error as e:
         print(e)
+
+    return conn
 
 
 @app.route('/')
@@ -81,8 +82,6 @@ def calculate():
 
     conn = create_connection()
     if conn is not None:
-        create_table(conn)
-
         try:
             cursor = conn.cursor()
             cursor.execute('''
@@ -122,5 +121,22 @@ def app2_second_view():
     return response.content
 
 
+@app.errorhandler(requests.HTTPError)
+def handle_http_error(error):
+    error_code = error.response.status_code
+    error_message = error.response.text
+
+    logger.error(f'HTTP Error {error_code}: {error_message}')
+
+    return f"HTTP Error {error_code}: {error_message}", error_code
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Allow specifying a custom port at runtime, default to 5000
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
+
+    app.run(port=port, debug=True)
+    print(f"Server started at port {port}")
+
+# if __name__ == '__main__':
+#     app.run(debug=True)

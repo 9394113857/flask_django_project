@@ -1,0 +1,5 @@
+# Create .gitignore file using New-Item
+New-Item -ItemType file -Name .gitignore
+
+# Open .gitignore file in VSCode
+code .gitignore
