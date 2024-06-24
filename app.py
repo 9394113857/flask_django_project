@@ -2,12 +2,11 @@ import logging
 import os
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import date
 from logging.handlers import RotatingFileHandler
 
 import requests
-from flask import Flask, render_template, request, jsonify
-from requests.exceptions import HTTPError
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
@@ -15,7 +14,7 @@ app = Flask(__name__)
 logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
-log_file = os.path.join(logs_dir, f'{datetime.now().date()}.log')
+log_file = os.path.join(logs_dir, f'{date.today()}.log')
 
 log_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024, backupCount=5)
 log_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s [%(module)s:%(lineno)d] %(message)s'))
@@ -26,16 +25,17 @@ logger.addHandler(log_handler)
 
 # Delete older log files
 for filename in os.listdir(logs_dir):
-    if filename.endswith('.log') and filename != os.path.basename(log_file):
-        os.remove(os.path.join(logs_dir, filename))
+    if filename.endswith('.log'):
+        filepath = os.path.join(logs_dir, filename)
+        if filepath != log_file:
+            os.remove(filepath)
 
-# SQLite database connection setup
+
 def create_connection():
     conn = None
     try:
         conn = sqlite3.connect('calculator.db')
-        cursor = conn.cursor()
-        
+
         # Define the table creation query
         create_table_query = '''
             CREATE TABLE IF NOT EXISTS calculator_logs (
@@ -49,98 +49,79 @@ def create_connection():
         '''
 
         # Create the table
+        cursor = conn.cursor()
         cursor.execute(create_table_query)
         conn.commit()
 
         return conn
     except sqlite3.Error as e:
-        logger.error(f'SQLite error: {e}')
-        return None
+        print(e)
 
-# Home page route
+    return conn
+
+
 @app.route('/')
 def home():
     logger.info('Home page accessed')
     return render_template('index.html')
 
+
 @app.route('/calculate')
 def calculate():
-    try:
-        num1 = request.args.get('num1')
-        num2 = request.args.get('num2')
-        operation = request.args.get('operation')
+    num1 = request.args.get('num1')
+    num2 = request.args.get('num2')
+    operation = request.args.get('operation')
 
-        logger.info(f'Calculate route accessed with operation: {operation}, num1: {num1}, num2: {num2}')
+    logger.info(f'Calculate route accessed with operation: {operation}, num1: {num1}, num2: {num2}')
 
-        # Validate inputs
-        if not (num1 and num2 and operation):
-            return jsonify({'error': 'Missing parameters (num1, num2, operation)'}), 400
+    url = f'http://localhost:8000/app3/{operation}/{num1}/{num2}/'
+    response = requests.get(url)
+    result = response.json()['result']
 
-        # Make request to external API
-        url = f'http://localhost:8000/app3/{operation}/{num1}/{num2}/'
-        response = requests.get(url)
-        response.raise_for_status()  # Raise exception for bad status codes
+    logger.info(f'Result: {result}')
 
-        result = response.json()['result']
+    conn = create_connection()
+    if conn is not None:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO calculator_logs (operation, num1, num2, result)
+                VALUES (?, ?, ?, ?)
+            ''', (operation, num1, num2, result))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+        finally:
+            conn.close()
 
-        logger.info(f'Result: {result}')
+    return render_template('result.html', result=result)
 
-        # Store result in database
-        conn = create_connection()
-        if conn is not None:
-            try:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO calculator_logs (operation, num1, num2, result)
-                    VALUES (?, ?, ?, ?)
-                ''', (operation, num1, num2, result))
-                conn.commit()
-            except sqlite3.Error as e:
-                logger.error(f'SQLite error: {e}')
-                return jsonify({'error': 'Database error occurred'}), 500
-            finally:
-                conn.close()
-        else:
-            return jsonify({'error': 'Database connection error'}), 500
 
-        return jsonify({'result': result}), 200
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f'Request error: {e}')
-        return jsonify({'error': f'Request error: {e}'}), 500
-
-    except KeyError as e:
-        logger.error(f'KeyError: {e}')
-        return jsonify({'error': 'Invalid response format from external API'}), 500
-
-    except Exception as e:
-        logger.error(f'Unexpected error: {e}')
-        return jsonify({'error': 'Internal server error'}), 500
-
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f'Request error: {e}')
-        return f"Request error: {e}", 500  # Return an error response for request exceptions
-
-# View routes for app1 and app2
 @app.route('/app1/')
 def app1_view():
-    return get_response_content('http://localhost:8000/app1/')
+    response = requests.get('http://localhost:8000/app1/')
+    return response.content
+
 
 @app.route('/app1/second/')
 def app1_second_view():
-    return get_response_content('http://localhost:8000/app1/second/')
+    response = requests.get('http://localhost:8000/app1/second/')
+    return response.content
+
 
 @app.route('/app2/')
 def app2_view():
-    return get_response_content('http://localhost:8000/app2/')
+    response = requests.get('http://localhost:8000/app2/')
+    return response.content
+
 
 @app.route('/app2/second/')
 def app2_second_view():
-    return get_response_content('http://localhost:8000/app2/second/')
+    response = requests.get('http://localhost:8000/app2/second/')
+    return response.content
 
-# Function to handle HTTP errors from requests
-@app.errorhandler(HTTPError)
+
+@app.errorhandler(requests.HTTPError)
 def handle_http_error(error):
     error_code = error.response.status_code
     error_message = error.response.text
@@ -149,19 +130,13 @@ def handle_http_error(error):
 
     return f"HTTP Error {error_code}: {error_message}", error_code
 
-# Helper function to fetch response content from external APIs
-def get_response_content(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise exception for bad status codes
-        return response.content
-    except requests.exceptions.RequestException as e:
-        logger.error(f'Request error: {e}')
-        return f"Request error: {e}", 500
 
 if __name__ == '__main__':
     # Allow specifying a custom port at runtime, default to 5000
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
 
     app.run(port=port, debug=True)
-    logger.info(f"Server started at port {port}")
+    print(f"Server started at port {port}")
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
