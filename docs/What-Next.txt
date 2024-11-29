@@ -1,0 +1,6 @@
+So Check Current Status from and to projects are working in office and laptop system anywhere first and confirm first at least somewhere its working and note all that successfully integrated steps as Documentations and make staright bullet points in short frame to explore anyone okay.
+
+So in Flask Database table check time stamp not storing current time etc. 
+So back test these changes immediately. 
+
+Test with postman and by browser and by cmd and with curl commands also.
