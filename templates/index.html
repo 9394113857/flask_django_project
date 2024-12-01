@@ -2,19 +2,99 @@
 <html>
 <head>
     <title>Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .timer {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
+    <div class="timer" id="liveTimer"></div>
+
     <h1>Calculator</h1>
-    <form action="/calculate" method="GET">
-        <input type="text" name="num1" placeholder="Number 1">
-        <input type="text" name="num2" placeholder="Number 2">
-        <select name="operation">
-            <option value="addition">Addition</option>
-            <option value="multiplication">Multiplication</option>
-            <option value="subtraction">Subtraction</option>
-            <option value="division">Division</option>
-        </select>
-        <button type="submit">Calculate</button>
-    </form>
+    <div class="container">
+        <form action="/calculate" method="GET">
+            <input type="text" name="num1" placeholder="Number 1" required>
+            <input type="text" name="num2" placeholder="Number 2" required>
+            <select name="operation">
+                <option value="addition">Addition</option>
+                <option value="multiplication">Multiplication</option>
+                <option value="subtraction">Subtraction</option>
+                <option value="division">Division</option>
+            </select>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+
+    <script>
+        function updateTimer() {
+            var currentDate = new Date();
+
+            // Get hours, minutes, seconds
+            var hours = currentDate.getHours();
+            var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+            var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+            // Determine AM or PM
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+
+            // Get the day and date
+            var day = currentDate.toLocaleString('default', { weekday: 'long' });
+            var date = currentDate.toLocaleDateString();
+
+            // Format time as "Day, MM/DD/YYYY hh:mm:ss AM/PM"
+            var timeString = `${day}, ${date} ${hours}:${minutes}:${seconds} ${ampm}`;
+            document.getElementById("liveTimer").innerHTML = timeString;
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();  // Initial call to set the timer immediately
+    </script>
 </body>
 </html>

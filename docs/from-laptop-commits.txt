@@ -1,0 +1,18 @@
+From Laptop changes as on: 16-11-24 after ---> 8:00 AM 
+From Laptop changes as on: 18-11-24 after ---> 8:00 AM 
+From Laptop changes as on: 26-11-24 after ---> 8:30 AM 
+----------------------------------------------------------------
+From office system changes as on: 1-12-24 after ---> 9:00 AM
+----------------------------------------------------------------
+git commit -m "Feature: Added live clock with 12-hour format (AM/PM) to index and result pages
+
+1. Implemented live clock on index page, showing current time in 12-hour format (AM/PM).
+2. Added live clock to result page, with the same 12-hour time format (AM/PM).
+3. Used JavaScript to dynamically update time every second.
+4. Displayed the clock at the top of both pages for better visibility.
+5. Ensured clock updates in real-time across both pages using `setInterval()`.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+
+
