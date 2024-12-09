@@ -2,10 +2,85 @@
 <html>
 <head>
     <title>Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .timer {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
+    <div class="timer" id="liveTimer"></div>
+
     <h1>Result</h1>
-    <p>Result: {{ result }}</p>
-    <a href="/">Back to Calculator</a>
+    <div class="container">
+        <p>Result: {{ result }}</p>
+        <a href="/">Back to Calculator</a>
+    </div>
+
+    <script>
+        function updateTimer() {
+            var currentDate = new Date();
+
+            // Get hours, minutes, seconds
+            var hours = currentDate.getHours();
+            var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+            var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+            // Determine AM or PM
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+
+            // Get the day and date
+            var day = currentDate.toLocaleString('default', { weekday: 'long' });
+            var date = currentDate.toLocaleDateString();
+
+            // Format time as "Day, MM/DD/YYYY hh:mm:ss AM/PM"
+            var timeString = `${day}, ${date} ${hours}:${minutes}:${seconds} ${ampm}`;
+            document.getElementById("liveTimer").innerHTML = timeString;
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();  // Initial call to set the timer immediately
+    </script>
 </body>
 </html>

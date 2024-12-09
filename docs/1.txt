@@ -1,0 +1,3 @@
+# Abort the Merge: To undo the merge process (reverse the git pull), use the following command:
+git merge --abort
+
