@@ -7,3 +7,8 @@ So back test these changes immediately.
 Test with postman and by browser and by cmd and with curl commands also.
 =======
 >>>>>>> db825ec077b075126acfc9166e02f7760b30f088
+
+
+So previous log files should not dlete and keep old files and like replaced like that backup and delete too old and make changes in gitignore file to allow to push logs folder files also accordingly.
+And check db enhancements if any old discussions and any kind of addons etc like that.
+
